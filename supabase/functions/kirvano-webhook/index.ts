@@ -1,4 +1,4 @@
-// import { serve } from "https://deno.land/std@0.190.0/http/server.ts"; // Deprecated, using Deno.serve instead
+import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { Resend } from "https://esm.sh/resend@2.0.0";
 
@@ -15,6 +15,28 @@ function generatePassword(length = 12): string {
   return Array.from(array, (byte) => chars[byte % chars.length]).join('');
 }
 
+interface WebhookBody {
+  status?: string;
+  payment_status?: string;
+  transaction_status?: string;
+  email?: string;
+  customer_email?: string;
+  customer?: { email?: string; name?: string };
+  buyer?: { email?: string; name?: string };
+  client?: { email?: string };
+  product_id?: string;
+  offer_id?: string;
+  product?: { id?: string };
+  customer_name?: string;
+  amount?: number | string;
+  total_amount?: number | string;
+  price?: number | string;
+  id?: string | number;
+  transaction_id?: string | number;
+  order_id?: string | number;
+  [key: string]: any;
+}
+
 Deno.serve(async (req) => {
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
@@ -29,7 +51,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const body = await req.json();
+    const body: WebhookBody = await req.json();
 
     console.log('=== KIRVANO WEBHOOK RECEIVED ===');
     console.log('Body:', JSON.stringify(body, null, 2));
@@ -114,7 +136,16 @@ Deno.serve(async (req) => {
     });
 
     // Check if user already exists in Supabase Auth
-    const { data: existingUsers } = await supabaseAdmin.auth.admin.listUsers();
+    const { data: existingUsers, error: listError } = await supabaseAdmin.auth.admin.listUsers();
+
+    if (listError) {
+      console.error('Error listing users:', listError);
+      return new Response(JSON.stringify({ error: 'Error checking existing users' }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
     const existingUser = existingUsers?.users?.find(u => u.email?.toLowerCase() === email.toLowerCase());
 
     let userId: string;
@@ -171,6 +202,17 @@ Deno.serve(async (req) => {
         return new Response(JSON.stringify({
           ok: false,
           message: `Erro ao criar usuário: ${authError.message}`
+        }), {
+          status: 200,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      if (!authData.user) {
+        console.error('User created but no user data returned');
+        return new Response(JSON.stringify({
+          ok: false,
+          message: 'Erro ao criar usuário: dados não retornados'
         }), {
           status: 200,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
