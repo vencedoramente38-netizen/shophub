@@ -5,6 +5,11 @@ import type { Database } from './types';
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || "https://placeholder.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || "placeholder";
 
+console.log("Supabase URL initialized with:", SUPABASE_URL);
+if (SUPABASE_URL.includes("placeholder")) {
+  console.error("CRITICAL: Supabase URL is using placeholder! Check your .env file.");
+}
+
 if (!import.meta.env.VITE_SUPABASE_URL) {
   console.warn("Supabase URL is missing from environment variables.");
 }
