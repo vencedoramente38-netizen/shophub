@@ -1,0 +1,161 @@
+@import "@fontsource/poppins/400.css";
+@import "@fontsource/poppins/500.css";
+@import "@fontsource/poppins/600.css";
+@import "@fontsource/poppins/700.css";
+@import "@fontsource/poppins/800.css";
+@import "@fontsource/poppins/900.css";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 0%;
+    --foreground: 210 20% 98%;
+
+    --card: 0 0% 2%;
+    --card-foreground: 210 20% 98%;
+
+    --popover: 0 0% 2%;
+    --popover-foreground: 210 20% 98%;
+
+    --primary: 350 82% 51%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 0 0% 2%;
+    --secondary-foreground: 210 20% 98%;
+
+    --muted: 0 0% 10%;
+    --muted-foreground: 220 9% 60%;
+
+    --accent: 350 82% 51%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 0 0% 100% / 0.1;
+    --input: 0 0% 100% / 0.1;
+    --ring: 350 82% 51%;
+
+    --radius: 0.75rem;
+
+    --sidebar-background: 0 0% 0%;
+    --sidebar-foreground: 0 0% 100% / 0.6;
+    --sidebar-primary: 350 82% 51%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 0 0% 2%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 0 0% 100% / 0.1;
+    --sidebar-ring: 350 82% 51%;
+
+    /* Custom colors */
+    --success: 142 76% 36%;
+    --success-foreground: 0 0% 100%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 0%;
+    --info: 199 89% 48%;
+    --info-foreground: 0 0% 100%;
+
+    /* Neon TikTok */
+    --neon-cyan: 350 100% 55%;
+    --neon-pink: 344 100% 59%;
+  }
+
+  .dark {
+    --background: 0 0% 0%;
+    --foreground: 210 20% 98%;
+    --card: 0 0% 2%;
+    --card-foreground: 210 20% 98%;
+    --popover: 0 0% 2%;
+    --popover-foreground: 210 20% 98%;
+    --primary: 350 82% 51%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 0 0% 2%;
+    --secondary-foreground: 210 20% 98%;
+    --muted: 0 0% 10%;
+    --muted-foreground: 220 9% 60%;
+    --accent: 350 82% 51%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 62% 30%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 0 0% 100% / 0.1;
+    --input: 0 0% 100% / 0.1;
+    --ring: 350 82% 51%;
+    --sidebar-background: 0 0% 0%;
+    --sidebar-foreground: 0 0% 100% / 0.6;
+    --sidebar-primary: 350 82% 51%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 0 0% 2%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 0 0% 100% / 0.1;
+    --sidebar-ring: 350 82% 51%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+
+  body {
+    @apply bg-background text-foreground antialiased;
+  }
+}
+
+@layer utilities {
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
+
+@keyframes float {
+
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+.float-animation {
+  animation: float 6s ease-in-out infinite;
+}
+
+/* Global Font Override */
+* {
+  font-family: "Poppins", sans-serif !important;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+select,
+input,
+button,
+textarea,
+span,
+p,
+div,
+li,
+a {
+  font-family: "Poppins", sans-serif !important;
+}

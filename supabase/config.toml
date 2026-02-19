@@ -1,0 +1,4 @@
+project_id = "wmrdsemffemoraxaaslg"
+
+[functions.kirvano-webhook]
+verify_jwt = false
