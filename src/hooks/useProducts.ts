@@ -21,7 +21,20 @@ export function useProducts() {
       if (error) throw error;
 
       if (data) {
-        const mappedProducts: Product[] = data.map((p: any) => ({
+        const mappedProducts: Product[] = data.map((p: {
+          id: number;
+          nome: string;
+          categoria: string;
+          preco: number;
+          avaliacao: number;
+          vendas: number;
+          comissao: number;
+          concorrencia: string;
+          image_url: string;
+          link_tiktok: string;
+          score_viral: number;
+          preco_texto: string;
+        }) => ({
           id: Number(p.id),
           nome: p.nome,
           categoria: p.categoria,
@@ -29,7 +42,7 @@ export function useProducts() {
           avaliacao: p.avaliacao,
           vendas: p.vendas,
           comissao: p.comissao,
-          concorrencia: p.concorrencia,
+          concorrencia: p.concorrencia as Product["concorrencia"],
           imageUrl: p.image_url,
           linkTiktok: p.link_tiktok,
           scoreViral: p.score_viral,
@@ -137,7 +150,7 @@ export function useProducts() {
           avaliacao: data.avaliacao,
           vendas: data.vendas,
           comissao: data.comissao,
-          concorrencia: data.concorrencia as any,
+          concorrencia: data.concorrencia as Product["concorrencia"],
           imageUrl: data.image_url,
           linkTiktok: data.link_tiktok,
           scoreViral: data.score_viral,

@@ -45,36 +45,73 @@ export function AppLayout() {
           return;
         }
 
-        const { data: profile, error } = await supabase
+        const { data: profile, error: profileError } = await supabase
           .from('profiles')
           .select('plan, access_until')
           .eq('id', session.user.id)
           .maybeSingle();
 
-        if (error) {
-          console.error('Error fetching profile:', error);
+        if (profileError) {
+          console.error('Error fetching profile:', profileError);
           setAccessDenied("Erro ao verificar seu perfil. Verifique os logs.");
           setIsLoading(false);
           return;
         }
 
+        // Check if user is admin - admins bypass all checks
+        const { data: roleData } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', session.user.id)
+          .eq('role', 'admin')
+          .maybeSingle();
+
+        console.log("Access Diagnostics:", {
+          userEmail: session.user.email,
+          userId: session.user.id,
+          profilePlan: profile?.plan,
+          accessUntil: profile?.access_until,
+          isAdmin: !!roleData
+        });
+
+        if (roleData) {
+          console.log("Admin access granted.");
+          setIsLoading(false);
+          return;
+        }
+
         if (!profile) {
+          console.warn("User has no profile in 'profiles' table.");
           setAccessDenied("Usuário sem perfil configurado.");
           setIsLoading(false);
           return;
         }
 
         if (profile.plan === 'vitalicio') {
+          console.log("Lifetime plan detected, granting access.");
           setIsLoading(false);
           return;
         }
 
         if (profile.plan === 'mensal') {
           if (profile.access_until) {
-            const accessUntil = new Date(profile.access_until);
+            const accessDate = new Date(profile.access_until);
             const now = new Date();
 
-            if (accessUntil > now) {
+            if (isNaN(accessDate.getTime())) {
+              console.error("Invalid access_until date format:", profile.access_until);
+              setAccessDenied("Erro no formato da data de expiração. Contate o suporte.");
+              setIsLoading(false);
+              return;
+            }
+
+            console.log("Monthly verification:", {
+              accessDate: accessDate.toISOString(),
+              now: now.toISOString(),
+              isValid: accessDate > now
+            });
+
+            if (accessDate > now) {
               setIsLoading(false);
               return;
             }
@@ -86,9 +123,10 @@ export function AppLayout() {
 
         setAccessDenied("Plano inválido. Entre em contato com o suporte.");
         setIsLoading(false);
-      } catch (e: any) {
+      } catch (e: unknown) {
         console.error("Crash in checkAccess:", e);
-        setAccessDenied(`Erro fatal: ${e.message || "Desconhecido"}`);
+        const errorMessage = e instanceof Error ? e.message : String(e);
+        setAccessDenied(`Erro fatal: ${errorMessage}`);
         setIsLoading(false);
       }
     };

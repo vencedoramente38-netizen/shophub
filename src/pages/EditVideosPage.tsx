@@ -505,7 +505,7 @@ export default function EditVideosPage() {
                         ].map(pos => (
                           <button
                             key={pos.val}
-                            onClick={() => updateOverlay(selectedOverlayId, { position: pos.val as any })}
+                            onClick={() => updateOverlay(selectedOverlayId, { position: pos.val as TextOverlay["position"] })}
                             className={cn(
                               "h-10 rounded-xl border font-black text-[10px] transition-all",
                               textOverlays.find(o => o.id === selectedOverlayId)?.position === pos.val

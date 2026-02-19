@@ -77,7 +77,9 @@ export default function SettingsPage() {
       if (savedProfile) {
         try {
           setProfile(JSON.parse(savedProfile));
-        } catch { }
+        } catch (e) {
+          console.error("Error parsing profile:", e);
+        }
       }
 
       // Metrics from Supabase
@@ -107,7 +109,9 @@ export default function SettingsPage() {
       if (savedSales) {
         try {
           setSalesData(JSON.parse(savedSales));
-        } catch { }
+        } catch (e) {
+          console.error("Error parsing sales evolution:", e);
+        }
       } else {
         setSalesData([
           { name: "Jan", value: 0 },

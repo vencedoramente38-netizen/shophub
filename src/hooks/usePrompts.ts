@@ -29,7 +29,7 @@ export function usePrompts() {
           id: Number(p.id),
           title: p.title,
           content: p.content,
-          origin: p.origin as any,
+          origin: p.origin as SavedPrompt["origin"],
           createdAt: new Date(p.created_at)
         })));
       }
@@ -63,7 +63,7 @@ export function usePrompts() {
           id: Number(data.id),
           title: data.title,
           content: data.content,
-          origin: data.origin as any,
+          origin: data.origin as SavedPrompt["origin"],
           createdAt: new Date(data.created_at)
         };
         setPrompts(prev => [newPrompt, ...prev]);

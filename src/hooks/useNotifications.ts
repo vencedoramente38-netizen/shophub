@@ -102,7 +102,7 @@ export function useNotifications() {
           schema: 'public',
           table: 'sales_events',
         },
-        (payload) => {
+        (payload: { new: { customer_name: string; amount: number } }) => {
           console.log('New sale event received!', payload);
           const newSale = payload.new;
           const message = `Venda Realizada! ${newSale.customer_name} comprou R$ ${newSale.amount.toFixed(2)}`;

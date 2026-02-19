@@ -119,7 +119,9 @@ const AnimatedShaderBackground: React.FC = () => {
                 if (rendererRef.current) {
                     try {
                         container.removeChild(rendererRef.current.domElement);
-                    } catch { }
+                    } catch (e) {
+                        console.error("Error removing shader from DOM:", e);
+                    }
                     rendererRef.current.dispose();
                 }
                 geometry.dispose();

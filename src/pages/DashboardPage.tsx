@@ -96,7 +96,8 @@ export default function DashboardPage() {
         if (savedSales) {
           try {
             setSalesEvolution(JSON.parse(savedSales));
-          } catch {
+          } catch (e) {
+            console.error("Error parsing sales evolution:", e);
             setSalesEvolution(defaultSalesEvolution);
           }
         }

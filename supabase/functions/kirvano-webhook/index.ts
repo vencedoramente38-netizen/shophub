@@ -34,7 +34,7 @@ interface WebhookBody {
   id?: string | number;
   transaction_id?: string | number;
   order_id?: string | number;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 Deno.serve(async (req) => {
@@ -57,7 +57,7 @@ Deno.serve(async (req) => {
     console.log('Body:', JSON.stringify(body, null, 2));
 
     // Extract status - try common field names
-    const status = body.status || body.payment_status || body.transaction_status || '';
+    const status = (body.status || body.payment_status || body.transaction_status || '') as string;
     const statusLower = status.toLowerCase();
 
     // Check if payment is approved
@@ -73,12 +73,12 @@ Deno.serve(async (req) => {
     }
 
     // Extract email - try common field names
-    const email = body.email ||
+    const email = (body.email ||
       body.customer_email ||
       body.customer?.email ||
       body.buyer?.email ||
       body.client?.email ||
-      null;
+      null) as string | null;
 
     if (!email) {
       console.log('Email not found in payload');
@@ -92,7 +92,7 @@ Deno.serve(async (req) => {
     }
 
     // Extract product_id
-    const productId = body.product_id || body.offer_id || body.product?.id || '';
+    const productId = (body.product_id || body.offer_id || body.product?.id || '') as string;
 
     // Determine plan type based on product_id
     let plan: 'mensal' | 'vitalicio' | null = null;
@@ -146,7 +146,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    const existingUser = existingUsers?.users?.find(u => u.email?.toLowerCase() === email.toLowerCase());
+    const existingUser = existingUsers?.users?.find((u: { email?: string }) => u.email?.toLowerCase() === email.toLowerCase());
 
     let userId: string;
     let password: string | null = null;
@@ -256,9 +256,9 @@ Deno.serve(async (req) => {
     }
 
     // Insert into sales_events for real-time notifications
-    const customerName = body.customer_name || body.customer?.name || body.buyer?.name || 'Cliente';
-    const amount = body.amount || body.total_amount || body.price || 0;
-    const saleId = body.id || body.transaction_id || body.order_id || `manual-${Date.now()}`;
+    const customerName = (body.customer_name || body.customer?.name || body.buyer?.name || 'Cliente') as string;
+    const amount = (Number(body.amount) || Number(body.total_amount) || Number(body.price) || 0);
+    const saleId = (body.id || body.transaction_id || body.order_id || `manual-${Date.now()}`) as string | number;
 
     const { error: saleError } = await supabaseAdmin
       .from('sales_events')
@@ -288,7 +288,7 @@ Deno.serve(async (req) => {
         const loginUrl = 'https://tiktoksync.lovable.app/login';
 
         try {
-          await resend.emails.send({
+          const { error: emailError } = await resend.emails.send({
             from: 'TikTokSync <noreply@tiktoksync.lovable.app>',
             to: [email],
             subject: 'Acesso Liberado - TikTokSync',
@@ -332,10 +332,17 @@ Deno.serve(async (req) => {
               </div>
             `,
           });
-          console.log('Welcome email sent successfully');
-        } catch (emailError) {
-          console.error('Error sending email:', emailError);
-          // Don't fail the webhook if email fails - user is already created
+
+          if (emailError) {
+            console.error('Resend Error:', emailError);
+            if (emailError && typeof emailError === 'object' && 'statusCode' in emailError && emailError.statusCode === 403) {
+              console.warn('AVISO: O Resend está bloqueando envios fora do domínio de teste. Verifique seu domínio no painel do Resend!');
+            }
+          } else {
+            console.log('Welcome email sent successfully');
+          }
+        } catch (err) {
+          console.error('Unexpected error sending email:', err);
         }
       } else {
         console.log('RESEND_API_KEY not configured, skipping email');
