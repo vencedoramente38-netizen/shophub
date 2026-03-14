@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
-import { User, Bell, Shield, Save, Plus, Trash2, RotateCcw, Lock, Unlock, Eye, EyeOff } from "lucide-react";
+import { User, Bell, Shield, Save, Plus, Trash2, RotateCcw, Lock, Unlock, Eye, EyeOff, Copy, Key, Users, CheckCircle2, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,6 +12,26 @@ import { Product, defaultProducts } from "@/data/products";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import confetti from "canvas-confetti";
+
+interface ActivationKey {
+  id: string;
+  key: string;
+  type: 'monthly' | 'lifetime';
+  created_at: string;
+  expires_at: string | null;
+  used: boolean;
+  used_at: string | null;
+  used_by: string | null;
+}
+
+interface DBUser {
+  id: string;
+  name: string;
+  email: string;
+  plan_type: string;
+  activated_at: string;
+  expires_at: string | null;
+}
 
 interface UserProfile {
   name: string;
@@ -70,6 +90,9 @@ export default function SettingsPage() {
     scoreViral: 50,
   });
 
+  const [keys, setKeys] = useState<ActivationKey[]>([]);
+  const [dbUsers, setDbUsers] = useState<DBUser[]>([]);
+
   useEffect(() => {
     const fetchSettingsData = async () => {
       // Profile from LocalStorage
@@ -84,8 +107,8 @@ export default function SettingsPage() {
 
       // Metrics from Supabase
       try {
-        const { data: metricsData, error: metricsError } = await supabase
-          .from("dashboard_metrics")
+        const { data: metricsData, error: metricsError } = await (supabase
+          .from("dashboard_metrics" as any) as any)
           .select("*")
           .eq("id", 1)
           .maybeSingle();
@@ -127,6 +150,69 @@ export default function SettingsPage() {
     fetchSettingsData();
   }, []);
 
+  useEffect(() => {
+    if (isAdminAuthenticated) {
+      fetchKeys();
+      fetchDbUsers();
+    }
+  }, [isAdminAuthenticated]);
+
+  const fetchKeys = async () => {
+    const { data, error } = await (supabase
+      .from("keys" as any) as any)
+      .select("*")
+      .order("created_at", { ascending: false });
+    if (!error && data) setKeys(data as unknown as ActivationKey[]);
+  };
+
+  const fetchDbUsers = async () => {
+    const { data, error } = await (supabase
+      .from("users" as any) as any)
+      .select("*")
+      .order("activated_at", { ascending: false });
+    if (!error && data) setDbUsers(data as unknown as DBUser[]);
+  };
+
+  const generateKey = async (type: 'monthly' | 'lifetime') => {
+    const randomChars = Math.random().toString(36).substring(2, 10).toUpperCase();
+    const prefix = type === 'monthly' ? 'CREATOR-MES-' : 'CREATOR-VIP-';
+    const newKey = prefix + randomChars;
+
+    const expiresAt = type === 'monthly'
+      ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+      : null;
+
+    const { error } = await supabase
+      .from("keys")
+      .insert({
+        key: newKey,
+        type,
+        expires_at: expiresAt
+      });
+
+    if (error) {
+      toast.error("Erro ao gerar chave");
+    } else {
+      toast.success(`Chave ${type} gerada: ${newKey}`);
+      fetchKeys();
+      navigator.clipboard.writeText(newKey);
+    }
+  };
+
+  const deleteKey = async (id: string) => {
+    const { error } = await supabase.from("keys").delete().eq("id", id);
+    if (error) toast.error("Erro ao deletar chave");
+    else {
+      toast.success("Chave deletada");
+      fetchKeys();
+    }
+  };
+
+  const copyKey = (key: string) => {
+    navigator.clipboard.writeText(key);
+    toast.success("Copiado!");
+  };
+
   const handleAdminAuth = () => {
     if (adminPassword === "admin321") {
       setIsAdminAuthenticated(true);
@@ -143,8 +229,8 @@ export default function SettingsPage() {
 
   const saveMetrics = async () => {
     try {
-      const { error } = await supabase
-        .from("dashboard_metrics")
+      const { error } = await (supabase
+        .from("dashboard_metrics" as any) as any)
         .update({
           faturamento: metrics.faturamento,
           pedidos: metrics.pedidos,
@@ -636,6 +722,126 @@ export default function SettingsPage() {
                     </Button>
                   </div>
                 )}
+              </div>
+
+              {/* Key Management Section */}
+              <div className="space-y-6 pt-10 border-t border-white/5">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-lg font-bold text-white border-l-4 border-[#FE2C55] pl-4">Gerenciar Chaves de Ativação</h4>
+                  <div className="flex gap-3">
+                    <Button
+                      onClick={() => generateKey('monthly')}
+                      className="bg-[#06b6d4] hover:bg-[#06b6d4]/80 text-white font-bold rounded-xl h-10"
+                    >
+                      <Plus className="h-4 w-4 mr-2" /> + Key Mensal
+                    </Button>
+                    <Button
+                      onClick={() => generateKey('lifetime')}
+                      className="bg-[#a855f7] hover:bg-[#a855f7]/80 text-white font-bold rounded-xl h-10"
+                    >
+                      <Plus className="h-4 w-4 mr-2" /> + Key Vitalícia
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="grid gap-8 lg:grid-cols-1">
+                  <div className="bg-black/40 rounded-3xl border border-white/5 p-6 overflow-x-auto">
+                    <table className="w-full text-left">
+                      <thead>
+                        <tr className="text-[10px] font-black uppercase text-white/40 border-b border-white/5">
+                          <th className="pb-4 px-2">Key</th>
+                          <th className="pb-4 px-2">Tipo</th>
+                          <th className="pb-4 px-2">Status</th>
+                          <th className="pb-4 px-2">Criada em</th>
+                          <th className="pb-4 px-2 text-right">Ações</th>
+                        </tr>
+                      </thead>
+                      <tbody className="text-sm">
+                        {keys.map((k) => (
+                          <tr key={k.id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
+                            <td className="py-4 px-2 font-mono text-white">{k.key}</td>
+                            <td className="py-4 px-2">
+                              {k.type === 'lifetime' ? (
+                                <span className="text-[#a855f7] font-bold">Vitalícia</span>
+                              ) : (
+                                <span className="text-[#06b6d4] font-bold">Mensal</span>
+                              )}
+                            </td>
+                            <td className="py-4 px-2">
+                              {k.used ? (
+                                <span className="px-2 py-0.5 rounded-full bg-white/10 text-white/40 text-[10px] font-bold">USADA</span>
+                              ) : k.expires_at && new Date(k.expires_at) < new Date() ? (
+                                <span className="px-2 py-0.5 rounded-full bg-red-500/20 text-red-500 text-[10px] font-bold">EXPIRADA</span>
+                              ) : (
+                                <span className="px-2 py-0.5 rounded-full bg-green-500/20 text-green-500 text-[10px] font-bold">DISPONÍVEL</span>
+                              )}
+                            </td>
+                            <td className="py-4 px-2 text-white/40 text-xs">
+                              {new Date(k.created_at).toLocaleDateString()}
+                            </td>
+                            <td className="py-4 px-2 text-right">
+                              <div className="flex justify-end gap-2">
+                                <Button size="icon" variant="ghost" onClick={() => copyKey(k.key)} className="h-8 w-8 text-white/40 hover:text-white rounded-lg">
+                                  <Copy className="h-3.5 w-3.5" />
+                                </Button>
+                                <Button size="icon" variant="ghost" onClick={() => deleteKey(k.id)} className="h-8 w-8 text-white/40 hover:text-red-500 rounded-lg">
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                </Button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                <div className="space-y-6 pt-10">
+                  <h4 className="text-lg font-bold text-white border-l-4 border-white pl-4">Usuários Cadastrados</h4>
+                  <div className="bg-black/40 rounded-3xl border border-white/5 p-6 overflow-x-auto">
+                    <table className="w-full text-left">
+                      <thead>
+                        <tr className="text-[10px] font-black uppercase text-white/40 border-b border-white/5">
+                          <th className="pb-4 px-2">Nome / E-mail</th>
+                          <th className="pb-4 px-2">Plano</th>
+                          <th className="pb-4 px-2">Ativação</th>
+                          <th className="pb-4 px-2">Status</th>
+                        </tr>
+                      </thead>
+                      <tbody className="text-sm">
+                        {dbUsers.map((u) => (
+                          <tr key={u.id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
+                            <td className="py-4 px-2">
+                              <p className="font-bold text-white">{u.name}</p>
+                              <p className="text-xs text-white/40">{u.email}</p>
+                            </td>
+                            <td className="py-4 px-2">
+                              {u.plan_type === 'lifetime' ? (
+                                <div className="flex items-center gap-1.5 text-[#a855f7] text-[10px] font-bold">
+                                  <CheckCircle2 size={12} /> Vitalício
+                                </div>
+                              ) : (
+                                <div className="flex items-center gap-1.5 text-[#06b6d4] text-[10px] font-bold">
+                                  <Clock size={12} /> Mensal
+                                </div>
+                              )}
+                            </td>
+                            <td className="py-4 px-2 text-white/40 text-xs">
+                              {new Date(u.activated_at).toLocaleDateString()}
+                            </td>
+                            <td className="py-4 px-2">
+                              {u.expires_at && new Date(u.expires_at) < new Date() ? (
+                                <span className="px-2 py-0.5 rounded-full bg-red-500/20 text-red-500 text-[10px] font-bold uppercase transition-all">Expirado</span>
+                              ) : (
+                                <span className="px-2 py-0.5 rounded-full bg-green-500/20 text-green-500 text-[10px] font-bold uppercase transition-all">Ativo</span>
+                              )}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
               </div>
             </div>
           </div>

@@ -1,3 +1,6 @@
+// @ts-nocheck
+/* eslint-disable */
+declare const Deno: any;
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "@supabase/supabase-js";
 import { Resend } from "resend";
@@ -51,7 +54,7 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
-    const body: WebhookBody = await req.json();
+    const body = await req.json() as WebhookBody;
 
     console.log('=== KIRVANO WEBHOOK RECEIVED ===');
     console.log('Body:', JSON.stringify(body, null, 2));
@@ -117,6 +120,7 @@ Deno.serve(async (req: Request) => {
     console.log(`Payment approved - Email: ${email}, Plan: ${plan}`);
 
     // Initialize Supabase Admin client
+    console.log('Fetching Supabase env vars...');
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
@@ -128,6 +132,7 @@ Deno.serve(async (req: Request) => {
       });
     }
 
+    console.log('Creating Supabase Admin client...');
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
       auth: {
         autoRefreshToken: false,
@@ -136,6 +141,7 @@ Deno.serve(async (req: Request) => {
     });
 
     // Check if user already exists in Supabase Auth
+    console.log(`Checking if user exists: ${email}`);
     const { data: existingUsers, error: listError } = await supabaseAdmin.auth.admin.listUsers();
 
     if (listError) {
@@ -155,7 +161,7 @@ Deno.serve(async (req: Request) => {
     if (existingUser) {
       // User exists - just update access_until
       userId = existingUser.id;
-      console.log(`User already exists with ID: ${userId}, updating access_until`);
+      console.log(`User already exists with ID: ${userId}, updating profile...`);
 
       // Calculate new access_until (30 days from now for mensal)
       let accessUntil: string | null = null;
@@ -188,6 +194,7 @@ Deno.serve(async (req: Request) => {
       console.log('Profile updated successfully');
     } else {
       // New user - create account
+      console.log(`Creating new user account for: ${email}`);
       isNewUser = true;
       password = generatePassword(12);
 
@@ -220,7 +227,7 @@ Deno.serve(async (req: Request) => {
       }
 
       userId = authData.user.id;
-      console.log(`User created with ID: ${userId}`);
+      console.log(`User created with ID: ${userId}, inserting profile...`);
 
       // Calculate access_until (30 days from now for mensal, null for vitalicio)
       let accessUntil: string | null = null;
@@ -256,6 +263,7 @@ Deno.serve(async (req: Request) => {
     }
 
     // Insert into sales_events for real-time notifications
+    console.log('Inserting sales event...');
     const customerName = (body.customer_name || body.customer?.name || body.buyer?.name || 'Cliente') as string;
     const amount = (Number(body.amount) || Number(body.total_amount) || Number(body.price) || 0);
     const saleId = (body.id || body.transaction_id || body.order_id || `manual-${Date.now()}`) as string | number;
@@ -274,100 +282,74 @@ Deno.serve(async (req: Request) => {
 
     if (saleError) {
       console.error('Error inserting sale event:', saleError);
-      // Don't fail the whole request if just the notification fails
     } else {
       console.log('Sale event recorded successfully');
     }
 
-    // Send welcome email with credentials (only for new users)
-    if (isNewUser && password) {
-      const resendApiKey = Deno.env.get('RESEND_API_KEY');
-      if (resendApiKey) {
-        const resend = new Resend(resendApiKey);
+    // Send welcome/renewal email
+    console.log('Checking Resend configuration...');
+    const resendApiKey = Deno.env.get('RESEND_API_KEY');
 
-        const loginUrl = 'https://tiktoksync.lovable.app/login';
+    if (resendApiKey) {
+      console.log('Initializing Resend...');
+      const resend = new Resend(resendApiKey);
+      const loginUrl = 'https://tiktoksync.vercel.app/login';
 
-        try {
-          const { error: emailError } = await resend.emails.send({
-            from: 'TikTokSync <noreply@tiktoksync.lovable.app>',
-            to: [email],
-            subject: 'Acesso Liberado - TikTokSync',
-            html: `
-              <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
-                <h1 style="color: #7c3aed; text-align: center;">🎉 Seu acesso foi liberado!</h1>
-                
-                <p style="font-size: 16px; color: #555;">
-                  Olá! Seu pagamento foi aprovado e seu acesso ao <strong>TikTokSync</strong> (Plano ${plan === 'vitalicio' ? 'Vitalício' : 'Mensal'}) já está disponível.
-                </p>
-                
-                <div style="background: #f9f9f9; border-radius: 8px; padding: 20px; margin: 20px 0; border-left: 4px solid #7c3aed;">
-                  <h2 style="color: #333; margin-top: 0; font-size: 18px;">Seus dados de acesso:</h2>
-                  <p style="font-size: 16px; margin: 10px 0;">
-                    <strong>E-mail:</strong> ${email}
-                  </p>
-                  <p style="font-size: 16px; margin: 10px 0;">
-                    <strong>Senha:</strong> ${password}
-                  </p>
-                </div>
-                
-                <div style="text-align: center; margin: 30px 0;">
-                  <p style="font-size: 16px; color: #333; font-weight: bold;">
-                    Entre com seu e-mail e esta senha no link abaixo:
-                  </p>
-                  <a href="${loginUrl}" 
-                     style="display: inline-block; background: #7c3aed; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-size: 16px; font-weight: bold;">
-                    Acessar TikTokSync
-                  </a>
-                </div>
-                
-                <p style="font-size: 14px; color: #888; text-align: center;">
-                  Recomendamos que você altere sua senha após o primeiro login nas configurações do perfil.
-                </p>
-                
-                <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">
-                
-                <p style="font-size: 12px; color: #aaa; text-align: center;">
-                  © ${new Date().getFullYear()} TikTokSync. Todos os direitos reservados.
-                </p>
+      const subject = isNewUser ? 'Acesso Liberado - TikTokSync' : 'Acesso Renovado - TikTokSync';
+      const greeting = isNewUser ? '🎉 Seu acesso foi liberado!' : '✅ Seu acesso foi renovado!';
+
+      try {
+        const fromEmail = Deno.env.get('FROM_EMAIL') || 'TikTokSync <contato@tiktoksync.com.br>';
+        console.log(`Attempting to send email via Resend to ${email} from ${fromEmail}...`);
+
+        // Wrap Resend call in a timeout race to prevent hanging
+        const emailPromise = resend.emails.send({
+          from: fromEmail,
+          to: [email],
+          subject: subject,
+          html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
+              <h1 style="color: #7c3aed; text-align: center;">${greeting}</h1>
+              <p style="font-size: 16px; color: #555;">Olá! Seu pagamento foi aprovado.</p>
+              <div style="text-align: center; margin: 30px 0;">
+                <a href="${loginUrl}" style="display: inline-block; background: #7c3aed; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-size: 16px; font-weight: bold;">
+                  Acessar TikTokSync
+                </a>
               </div>
-            `,
-          });
+            </div>
+          `,
+        });
 
-          if (emailError) {
-            console.error('Resend Error:', emailError);
-            if (emailError && typeof emailError === 'object' && 'statusCode' in emailError && emailError.statusCode === 403) {
-              console.warn('AVISO: O Resend está bloqueando envios fora do domínio de teste. Verifique seu domínio no painel do Resend!');
-            }
-          } else {
-            console.log('Welcome email sent successfully');
-          }
-        } catch (err) {
-          console.error('Unexpected error sending email:', err);
+        // Add a 10s timeout to the Resend call
+        const timeoutPromise = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Resend timeout')), 10000)
+        );
+
+        const { data: emailData, error: emailError } = await Promise.race([emailPromise, timeoutPromise]) as any;
+
+        if (emailError) {
+          console.error('Resend Error:', JSON.stringify(emailError));
+        } else {
+          console.log('Email sent successfully:', JSON.stringify(emailData));
         }
-      } else {
-        console.log('RESEND_API_KEY not configured, skipping email');
+      } catch (err) {
+        console.error('Email sending failed or timed out:', err);
       }
-    } else if (!isNewUser) {
-      console.log('Existing user - skipping welcome email, just renewed access');
+    } else {
+      console.log('RESEND_API_KEY not found in environment');
     }
 
-    console.log('================================');
+    console.log('=== WEBHOOK PROCESSING COMPLETE ===');
 
-    return new Response(JSON.stringify({
-      ok: true,
-      renewed: !isNewUser
-    }), {
+    return new Response(JSON.stringify({ ok: true }), {
       status: 200,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
 
   } catch (error) {
-    console.error('Error processing webhook:', error);
-    return new Response(JSON.stringify({
-      ok: false,
-      message: 'Erro ao processar webhook'
-    }), {
-      status: 200,
+    console.error('Global capture error:', error);
+    return new Response(JSON.stringify({ ok: false, error: 'Internal Server Error' }), {
+      status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }

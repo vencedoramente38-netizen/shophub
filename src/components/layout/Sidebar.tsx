@@ -1,4 +1,4 @@
-import { NavLink, useLocation } from "react-router-dom";
+import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import {
   LayoutDashboard,
@@ -11,15 +11,17 @@ import {
   X,
   ChevronLeft,
   ChevronRight,
-  Zap
+  Zap,
+  CheckCircle2,
+  Clock
 } from "lucide-react";
-import { useAuth } from "@/hooks/useAuth";
 
 interface SidebarProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   isCollapsed: boolean;
   onCollapsedChange: (collapsed: boolean) => void;
+  user: any;
 }
 
 const menuItems = [
@@ -32,14 +34,24 @@ const menuItems = [
   { icon: Settings, label: "Configuracoes", path: "/configuracoes" },
 ];
 
-export function Sidebar({ isOpen, onOpenChange, isCollapsed, onCollapsedChange }: SidebarProps) {
+export function Sidebar({ isOpen, onOpenChange, isCollapsed, onCollapsedChange, user }: SidebarProps) {
   const location = useLocation();
-  const { logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    localStorage.removeItem("session");
+    navigate("/login");
+  };
+
+  const getDaysRemaining = (expiryDate: string) => {
+    const diff = new Date(expiryDate).getTime() - new Date().getTime();
+    return Math.ceil(diff / (1000 * 60 * 60 * 24));
+  };
 
   const sidebarContent = (collapsed: boolean) => (
     <aside className={cn(
       "sticky top-0 flex h-screen flex-col bg-black text-white transition-all duration-300 relative",
-      collapsed ? "w-16" : "w-60"
+      collapsed ? "w-20" : "w-64"
     )}>
       {/* Circular collapse toggle - desktop only */}
       <button
@@ -49,24 +61,44 @@ export function Sidebar({ isOpen, onOpenChange, isCollapsed, onCollapsedChange }
         {collapsed ? <ChevronRight className="h-3 w-3" /> : <ChevronLeft className="h-3 w-3" />}
       </button>
 
-
       <div className={cn(
         "flex items-center border-b border-white/10",
-        collapsed ? "justify-center px-2 py-5" : "gap-3 px-4 py-5"
+        collapsed ? "justify-center px-2 py-6" : "gap-3 px-4 py-6"
       )}>
         <img
           src="https://i.postimg.cc/FHmp3GT8/Gemini-Generated-Image-ib23j0ib23j0ib23.png"
           alt="TikTok Sync"
-          className="h-8 w-8 rounded-lg object-cover"
+          className="h-10 w-10 rounded-xl object-cover"
         />
-        {!collapsed && <span className="text-sm font-semibold">TikTok Sync</span>}
+        {!collapsed && (
+          <div className="flex flex-col">
+            <span className="text-sm font-black italic tracking-tighter">TIKTOK SYNC</span>
+          </div>
+        )}
       </div>
 
-      <div className="h-[1px] bg-white/10 mx-4" />
+      <div className="flex-1 overflow-y-auto py-6 scrollbar-hide">
+        {/* User Profile Info */}
+        {!collapsed && user && (
+          <div className="px-4 mb-8">
+            <div className="p-4 rounded-2xl bg-white/5 border border-white/10">
+              <p className="text-sm font-bold text-white truncate">{user.name}</p>
+              <p className="text-[10px] text-white/40 truncate mb-3">{user.email}</p>
 
+              {user.plan_type === 'lifetime' ? (
+                <div className="flex items-center gap-1.5 w-fit px-2 py-1 rounded-full bg-[#a855f7]/10 border border-[#a855f7]/20 text-[#a855f7] text-[10px] font-bold">
+                  <CheckCircle2 size={12} /> Vitalício ♾️
+                </div>
+              ) : (
+                <div className="flex items-center gap-1.5 w-fit px-2 py-1 rounded-full bg-[#06b6d4]/10 border border-[#06b6d4]/20 text-[#06b6d4] text-[10px] font-bold">
+                  <Clock size={12} /> Mensal · {getDaysRemaining(user.expires_at)} dias
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
-      <nav className="flex-1 overflow-y-auto py-4">
-        <ul className="space-y-1 px-2">
+        <ul className="space-y-1 px-3">
           {menuItems.map((item) => {
             const isActive = location.pathname === item.path;
             return (
@@ -75,40 +107,33 @@ export function Sidebar({ isOpen, onOpenChange, isCollapsed, onCollapsedChange }
                   to={item.path}
                   onClick={() => onOpenChange(false)}
                   className={cn(
-                    "flex items-center rounded-lg text-sm font-medium transition-colors",
-                    collapsed ? "justify-center px-2 py-2.5" : "gap-3 px-3 py-2.5",
+                    "flex items-center rounded-xl text-sm font-medium transition-all group",
+                    collapsed ? "justify-center px-2 py-3" : "gap-3 px-3 py-3",
                     isActive
-                      ? "bg-card border-l-4 border-primary text-white"
+                      ? "bg-white text-black shadow-[0_0_20px_rgba(255,255,255,0.1)]"
                       : "text-white/60 hover:bg-white/5 hover:text-white"
                   )}
                   title={collapsed ? item.label : undefined}
                 >
-                  <item.icon className="h-5 w-5 text-primary" />
+                  <item.icon className={cn("h-5 w-5", isActive ? "text-primary" : "text-primary/60 group-hover:text-primary")} />
                   {!collapsed && item.label}
                 </NavLink>
               </li>
             );
           })}
         </ul>
+      </div>
 
-        {!collapsed && (
-          <div className="mt-6 px-4 mb-2">
-            <p className="text-[10px] font-black text-white/20 uppercase tracking-widest">Administração</p>
-          </div>
-        )}
-      </nav>
-
-
-      <div className="border-t border-white/10 p-2">
+      <div className="border-t border-white/10 p-4">
         <button
-          onClick={logout}
+          onClick={handleLogout}
           className={cn(
-            "flex w-full items-center rounded-lg text-sm font-medium text-white/60 hover:bg-white/5 hover:text-white transition-colors",
-            collapsed ? "justify-center px-2 py-2.5" : "gap-3 px-3 py-2.5"
+            "flex w-full items-center rounded-xl text-sm font-bold text-white/40 hover:bg-red-500/10 hover:text-red-500 transition-all",
+            collapsed ? "justify-center px-2 py-3" : "gap-3 px-3 py-3"
           )}
         >
           <LogOut className="h-5 w-5" />
-          {!collapsed && "Sair"}
+          {!collapsed && "Sair da Conta"}
         </button>
       </div>
     </aside>
@@ -125,14 +150,14 @@ export function Sidebar({ isOpen, onOpenChange, isCollapsed, onCollapsedChange }
       {isOpen && (
         <div className="fixed inset-0 z-50 md:hidden">
           <div
-            className="absolute inset-0 bg-black/60"
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
             onClick={() => onOpenChange(false)}
           />
-          <div className="absolute left-0 top-0 h-full w-60 animate-slide-in-right">
+          <div className="absolute left-0 top-0 h-full w-64 animate-in slide-in-from-left duration-300">
             <button
               type="button"
               onClick={() => onOpenChange(false)}
-              className="absolute right-3 top-3 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-white text-black border border-white/60"
+              className="absolute right-4 top-6 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-white text-black shadow-lg"
             >
               <X className="h-4 w-4" />
             </button>

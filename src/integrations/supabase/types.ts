@@ -7,200 +7,231 @@ export type Json =
   | Json[]
 
 export type Database = {
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "14.1"
   }
   public: {
     Tables: {
-      dashboard_metrics: {
+      keys: {
         Row: {
-          cliques: number | null
-          comissao: number | null
-          faturamento: number | null
-          id: number
-          pedidos: number | null
-          produtos_ativos: number | null
-          updated_at: string
+          created_at: string | null
+          expires_at: string | null
+          id: string
+          key: string
+          type: string
+          used: boolean | null
+          used_at: string | null
+          used_by: string | null
         }
         Insert: {
-          cliques?: number | null
-          comissao?: number | null
-          faturamento?: number | null
-          id?: number
-          pedidos?: number | null
-          produtos_ativos?: number | null
-          updated_at?: string
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          key: string
+          type: string
+          used?: boolean | null
+          used_at?: string | null
+          used_by?: string | null
         }
         Update: {
-          cliques?: number | null
-          comissao?: number | null
-          faturamento?: number | null
-          id?: number
-          pedidos?: number | null
-          produtos_ativos?: number | null
-          updated_at?: string
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          key?: string
+          type?: string
+          used?: boolean | null
+          used_at?: string | null
+          used_by?: string | null
         }
         Relationships: []
       }
       products: {
         Row: {
-          avaliacao: number | null
-          categoria: string
-          comissao: number | null
-          concorrencia: string | null
-          created_at: string
-          id: number
+          active: boolean | null
+          category: string | null
+          commission: string | null
+          created_at: string | null
+          created_by: string | null
+          id: string
           image_url: string | null
-          link_tiktok: string | null
-          nome: string
-          preco: number
-          preco_texto: string | null
+          name: string
+          price_text: string | null
+          rating: number | null
+          receita_est: string | null
           score_viral: number | null
-          vendas: number | null
+          tiktok_url: string | null
+          vendidos: number | null
         }
         Insert: {
-          avaliacao?: number | null
-          categoria: string
-          comissao?: number | null
-          concorrencia?: string | null
-          created_at?: string
-          id?: number
+          active?: boolean | null
+          category?: string | null
+          commission?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
           image_url?: string | null
-          link_tiktok?: string | null
-          nome: string
-          preco: number
-          preco_texto?: string | null
+          name: string
+          price_text?: string | null
+          rating?: number | null
+          receita_est?: string | null
           score_viral?: number | null
-          vendas?: number | null
+          tiktok_url?: string | null
+          vendidos?: number | null
         }
         Update: {
-          avaliacao?: number | null
-          categoria?: string
-          comissao?: number | null
-          concorrencia?: string | null
-          created_at?: string
-          id?: number
+          active?: boolean | null
+          category?: string | null
+          commission?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
           image_url?: string | null
-          link_tiktok?: string | null
-          nome?: string
-          preco?: number
-          preco_texto?: string | null
+          name?: string
+          price_text?: string | null
+          rating?: number | null
+          receita_est?: string | null
           score_viral?: number | null
-          vendas?: number | null
-        }
-        Relationships: []
-      }
-      prompts: {
-        Row: {
-          content: string
-          created_at: string
-          id: number
-          origin: string
-          title: string
-        }
-        Insert: {
-          content: string
-          created_at?: string
-          id?: number
-          origin: string
-          title: string
-        }
-        Update: {
-          content?: string
-          created_at?: string
-          id?: number
-          origin?: string
-          title?: string
+          tiktok_url?: string | null
+          vendidos?: number | null
         }
         Relationships: []
       }
       profiles: {
         Row: {
           access_until: string | null
+          avatar_url: string | null
           created_at: string | null
-          email: string | null
+          email: string
           id: string
-          plan: string | null
-        }
-        Insert: {
-          access_until?: string | null
-          created_at?: string | null
-          email?: string | null
-          id?: string
-          plan?: string | null
-        }
-        Update: {
-          access_until?: string | null
-          created_at?: string | null
-          email?: string | null
-          id?: string
-          plan?: string | null
-        }
-        Relationships: []
-      }
-      user_roles: {
-        Row: {
-          created_at: string | null
-          id: string
-          role: Database["public"]["Enums"]["app_role"]
+          name: string | null
+          plan: string
           user_id: string
         }
         Insert: {
+          access_until?: string | null
+          avatar_url?: string | null
           created_at?: string | null
+          email: string
           id?: string
-          role?: Database["public"]["Enums"]["app_role"]
+          name?: string | null
+          plan?: string
           user_id: string
         }
         Update: {
+          access_until?: string | null
+          avatar_url?: string | null
           created_at?: string | null
+          email?: string
           id?: string
-          role?: Database["public"]["Enums"]["app_role"]
+          name?: string | null
+          plan?: string
           user_id?: string
         }
         Relationships: []
       }
-      users_data: {
+      user_prompts: {
         Row: {
+          avatar_name: string | null
           created_at: string | null
-          data_expiracao: string | null
-          email: string | null
+          hashtags: string[] | null
           id: string
-          plano: string | null
-          status: string | null
+          product_name: string | null
+          prompt: string
+          title: string | null
+          type: string | null
+          user_id: string
         }
         Insert: {
+          avatar_name?: string | null
           created_at?: string | null
-          data_expiracao?: string | null
-          email?: string | null
-          id: string
-          plano?: string | null
-          status?: string | null
+          hashtags?: string[] | null
+          id?: string
+          product_name?: string | null
+          prompt: string
+          title?: string | null
+          type?: string | null
+          user_id: string
         }
         Update: {
+          avatar_name?: string | null
           created_at?: string | null
-          data_expiracao?: string | null
-          email?: string | null
+          hashtags?: string[] | null
           id?: string
-          plano?: string | null
-          status?: string | null
+          product_name?: string | null
+          prompt?: string
+          title?: string | null
+          type?: string | null
+          user_id?: string
         }
         Relationships: []
+      }
+      users: {
+        Row: {
+          activated_at: string | null
+          created_at: string | null
+          email: string
+          expires_at: string | null
+          id: string
+          key_used: string | null
+          name: string
+          password: string
+          plan_type: string
+        }
+        Insert: {
+          activated_at?: string | null
+          created_at?: string | null
+          email: string
+          expires_at?: string | null
+          id?: string
+          key_used?: string | null
+          name: string
+          password: string
+          plan_type: string
+        }
+        Update: {
+          activated_at?: string | null
+          created_at?: string | null
+          email?: string
+          expires_at?: string | null
+          id?: string
+          key_used?: string | null
+          name?: string
+          password?: string
+          plan_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "users_key_used_fkey"
+            columns: ["key_used"]
+            isOneToOne: false
+            referencedRelation: "keys"
+            referencedColumns: ["key"]
+          },
+        ]
       }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      has_role: {
+      admin_update_profile: {
         Args: {
-          _role: Database["public"]["Enums"]["app_role"]
-          _user_id: string
+          p_access_until: string
+          p_admin_id: string
+          p_plan: string
+          p_user_id: string
         }
         Returns: boolean
       }
+      login_user: {
+        Args: { p_email: string; p_password_hash: string }
+        Returns: Json
+      }
     }
     Enums: {
-      app_role: "admin" | "user"
+      [_ in never]: never
     }
     CompositeTypes: {
       [_ in never]: never
@@ -327,8 +358,6 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {
-      app_role: ["admin", "user"],
-    },
+    Enums: {},
   },
 } as const

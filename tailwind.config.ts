@@ -99,6 +99,11 @@ export default {
             opacity: "0",
           },
         },
+        shine: {
+          "0%": { "background-position": "0% 0%" },
+          "50%": { "background-position": "100% 100%" },
+          "100%": { "background-position": "0% 0%" },
+        },
         "shimmer-slide": {
           to: { transform: "translate(calc(100cqw - 100%), 0)" },
         },
@@ -125,6 +130,10 @@ export default {
         "spin-around": "spin-around calc(var(--speed) * 2) infinite linear",
         "fade-in": "fade-in 0.3s ease-out",
         "scale-in": "scale-in 0.2s ease-out",
+        shine: "shine var(--duration) infinite linear",
+      },
+      backgroundSize: {
+        "shine-size": "300% 300%",
       },
     },
   },

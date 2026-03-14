@@ -4,7 +4,6 @@ import { Menu } from "lucide-react";
 import { Sidebar } from "./Sidebar";
 import { Topbar } from "./Topbar";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
 
 export function AppLayout() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -12,7 +11,7 @@ export function AppLayout() {
     return localStorage.getItem("sidebarCollapsed") === "true";
   });
   const [isLoading, setIsLoading] = useState(true);
-  const [accessDenied, setAccessDenied] = useState<string | null>(null);
+  const [user, setUser] = useState<any>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -20,157 +19,44 @@ export function AppLayout() {
   }, [isSidebarCollapsed]);
 
   useEffect(() => {
-    const checkAccess = async () => {
+    const checkAccess = () => {
+      const sessionData = localStorage.getItem("session");
+
+      if (!sessionData) {
+        navigate("/login");
+        return;
+      }
+
       try {
-        if (!supabase) {
-          setAccessDenied("Erro: Cliente Supabase não inicializado.");
-          setIsLoading(false);
-          return;
-        }
+        const userData = JSON.parse(sessionData);
 
-        const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-
-        if (sessionError) {
-          console.error("Session error:", sessionError);
-          setAccessDenied("Erro ao iniciar sessão.");
-          setIsLoading(false);
-          return;
-        }
-
-        const session = sessionData?.session;
-
-        if (!session) {
-          console.log("No session found, redirecting to login");
-          navigate("/login");
-          return;
-        }
-
-        const { data: profile, error: profileError } = await supabase
-          .from('profiles')
-          .select('plan, access_until')
-          .eq('id', session.user.id)
-          .maybeSingle();
-
-        if (profileError) {
-          console.error('Error fetching profile:', profileError);
-          setAccessDenied("Erro ao verificar seu perfil. Verifique os logs.");
-          setIsLoading(false);
-          return;
-        }
-
-        // Check if user is admin - admins bypass all checks
-        const { data: roleData } = await supabase
-          .from('user_roles')
-          .select('role')
-          .eq('user_id', session.user.id)
-          .eq('role', 'admin')
-          .maybeSingle();
-
-        console.log("Access Diagnostics:", {
-          userEmail: session.user.email,
-          userId: session.user.id,
-          profilePlan: profile?.plan,
-          accessUntil: profile?.access_until,
-          isAdmin: !!roleData
-        });
-
-        if (roleData) {
-          console.log("Admin access granted.");
-          setIsLoading(false);
-          return;
-        }
-
-        if (!profile) {
-          console.warn("User has no profile in 'profiles' table.");
-          setAccessDenied("Usuário sem perfil configurado.");
-          setIsLoading(false);
-          return;
-        }
-
-        if (profile.plan === 'vitalicio') {
-          console.log("Lifetime plan detected, granting access.");
-          setIsLoading(false);
-          return;
-        }
-
-        if (profile.plan === 'mensal') {
-          if (profile.access_until) {
-            const accessDate = new Date(profile.access_until);
-            const now = new Date();
-
-            if (isNaN(accessDate.getTime())) {
-              console.error("Invalid access_until date format:", profile.access_until);
-              setAccessDenied("Erro no formato da data de expiração. Contate o suporte.");
-              setIsLoading(false);
-              return;
-            }
-
-            console.log("Monthly verification:", {
-              accessDate: accessDate.toISOString(),
-              now: now.toISOString(),
-              isValid: accessDate > now
-            });
-
-            if (accessDate > now) {
-              setIsLoading(false);
-              return;
-            }
+        // Check if plan expired
+        if (userData.expires_at) {
+          const expiryDate = new Date(userData.expires_at);
+          if (expiryDate < new Date()) {
+            toast.error("Seu plano expirou. Renove para continuar.");
+            localStorage.removeItem("session");
+            navigate("/login");
+            return;
           }
-          setAccessDenied("Seu plano expirou. Renove para continuar.");
-          setIsLoading(false);
-          return;
         }
 
-        setAccessDenied("Plano inválido. Entre em contato com o suporte.");
+        setUser(userData);
         setIsLoading(false);
-      } catch (e: unknown) {
-        console.error("Crash in checkAccess:", e);
-        const errorMessage = e instanceof Error ? e.message : String(e);
-        setAccessDenied(`Erro fatal: ${errorMessage}`);
-        setIsLoading(false);
+      } catch (e) {
+        console.error("Error parsing session:", e);
+        localStorage.removeItem("session");
+        navigate("/login");
       }
     };
 
     checkAccess();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
-        if (!session) {
-          navigate("/login");
-        }
-      }
-    );
-
-    return () => subscription.unsubscribe();
   }, [navigate]);
 
   if (isLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
+      <div className="flex min-h-screen items-center justify-center bg-[#050505]">
         <div className="text-white">Carregando...</div>
-      </div>
-    );
-  }
-
-  if (accessDenied) {
-    return (
-      <div className="relative flex min-h-screen items-center justify-center bg-background overflow-hidden">
-        <div className="relative z-10 w-full max-w-md space-y-6 px-4 text-center">
-          <div className="rounded-3xl border border-white/10 bg-card p-8">
-            <div className="mb-4 text-5xl">🔒</div>
-            <h1 className="text-xl font-bold text-white mb-2">Acesso Bloqueado</h1>
-            <p className="text-muted-foreground mb-6">{accessDenied}</p>
-            <button
-              onClick={async () => {
-                await supabase.auth.signOut();
-                navigate("/login");
-              }}
-              className="w-full rounded-lg bg-primary px-4 py-2 font-semibold text-white hover:bg-primary/90"
-            >
-              Voltar ao Login
-            </button>
-          </div>
-        </div>
       </div>
     );
   }
@@ -183,11 +69,10 @@ export function AppLayout() {
           onOpenChange={setIsSidebarOpen}
           isCollapsed={isSidebarCollapsed}
           onCollapsedChange={setIsSidebarCollapsed}
+          user={user}
         />
 
         <main className="relative flex-1 flex flex-col overflow-hidden">
-
-
           <div className="relative z-10 flex flex-1 flex-col overflow-hidden">
             <Topbar />
             <div className="flex-1 overflow-y-auto p-4 md:p-6 scrollbar-hide">
@@ -199,7 +84,6 @@ export function AppLayout() {
         </main>
       </div>
 
-      {/* Mobile floating button */}
       <button
         type="button"
         onClick={() => setIsSidebarOpen((v) => !v)}
