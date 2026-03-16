@@ -166,7 +166,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="relative flex min-h-screen items-center justify-center bg-[#050505] overflow-hidden">
+    <div className="relative flex min-h-screen items-center justify-center bg-[#050505] text-white overflow-hidden">
       <Particles className="absolute inset-0 z-0" quantity={40} />
 
       <div className="relative z-10 w-full max-w-md px-4 py-8">
