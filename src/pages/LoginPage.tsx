@@ -29,10 +29,11 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
+      const cleanEmail = email.trim().toLowerCase();
       const { data: user, error } = await (supabase
         .from("users" as any) as any)
         .select("*")
-        .eq("email", email)
+        .eq("email", cleanEmail)
         .maybeSingle();
 
       if (error) throw error;
