@@ -214,7 +214,7 @@ export default function SettingsPage() {
   };
 
   const handleAdminAuth = () => {
-    if (adminPassword === "admin321") {
+    if (adminPassword === ">admin321") {
       setIsAdminAuthenticated(true);
       toast.success("Acesso Admin concedido!");
     } else {

@@ -4,6 +4,7 @@ import { Menu } from "lucide-react";
 import { Sidebar } from "./Sidebar";
 import { Topbar } from "./Topbar";
 import { toast } from "sonner";
+import Particles from "@/components/ui/Particles";
 
 export function AppLayout() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -63,6 +64,7 @@ export function AppLayout() {
 
   return (
     <div className="relative h-screen bg-background text-white overflow-hidden font-poppins">
+      <Particles className="absolute inset-0 z-0" quantity={100} staticity={50} ease={50} color="#ffffff" refresh={false} />
       <div className="relative z-10 flex h-full w-full overflow-hidden">
         <Sidebar
           isOpen={isSidebarOpen}

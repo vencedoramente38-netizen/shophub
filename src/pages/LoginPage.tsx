@@ -201,23 +201,23 @@ export default function LoginPage() {
                 </TabsTrigger>
               </TabsList>
 
-              <TabsContent value="entrar" className="space-y-4">
+              <TabsContent value="entrar" className="space-y-4 text-white">
                 <form onSubmit={handleLogin} className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="login-email">E-mail</Label>
+                    <Label htmlFor="login-email" className="text-white">E-mail</Label>
                     <Input
                       id="login-email"
                       type="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="seu@email.com"
-                      className="bg-black/40 border-white/10 h-12 rounded-xl"
+                      className="bg-black/40 border-white/10 h-12 rounded-xl text-white placeholder:text-white/50"
                       required
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="login-password">Senha</Label>
+                    <Label htmlFor="login-password" className="text-white">Senha</Label>
                     <div className="relative">
                       <Input
                         id="login-password"
@@ -225,7 +225,7 @@ export default function LoginPage() {
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         placeholder="••••••••"
-                        className="bg-black/40 border-white/10 h-12 rounded-xl pr-10"
+                        className="bg-black/40 border-white/10 h-12 rounded-xl pr-10 text-white placeholder:text-white/50"
                         required
                       />
                       <button
@@ -248,70 +248,70 @@ export default function LoginPage() {
                 </form>
               </TabsContent>
 
-              <TabsContent value="criar" className="space-y-4">
+              <TabsContent value="criar" className="space-y-4 text-white">
                 <form onSubmit={handleSignUp} className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="signup-name">Nome Completo</Label>
+                    <Label htmlFor="signup-name" className="text-white">Nome Completo</Label>
                     <Input
                       id="signup-name"
                       type="text"
                       value={name}
                       onChange={(e) => setName(e.target.value)}
                       placeholder="Seu Nome"
-                      className="bg-black/40 border-white/10 h-10 rounded-xl"
+                      className="bg-black/40 border-white/10 h-10 rounded-xl text-white placeholder:text-white/50"
                       required
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="signup-email">E-mail</Label>
+                    <Label htmlFor="signup-email" className="text-white">E-mail</Label>
                     <Input
                       id="signup-email"
                       type="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="seu@email.com"
-                      className="bg-black/40 border-white/10 h-10 rounded-xl"
+                      className="bg-black/40 border-white/10 h-10 rounded-xl text-white placeholder:text-white/50"
                       required
                     />
                   </div>
 
                   <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-2">
-                      <Label htmlFor="signup-password">Senha</Label>
+                      <Label htmlFor="signup-password" className="text-white">Senha</Label>
                       <Input
                         id="signup-password"
                         type="password"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         placeholder="••••••"
-                        className="bg-black/40 border-white/10 h-10 rounded-xl"
+                        className="bg-black/40 border-white/10 h-10 rounded-xl text-white placeholder:text-white/50"
                         required
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="signup-confirm">Confirmar</Label>
+                      <Label htmlFor="signup-confirm" className="text-white">Confirmar</Label>
                       <Input
                         id="signup-confirm"
                         type="password"
                         value={confirmPassword}
                         onChange={(e) => setConfirmPassword(e.target.value)}
                         placeholder="••••••"
-                        className="bg-black/40 border-white/10 h-10 rounded-xl"
+                        className="bg-black/40 border-white/10 h-10 rounded-xl text-white placeholder:text-white/50"
                         required
                       />
                     </div>
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="signup-key">Chave de Ativação</Label>
+                    <Label htmlFor="signup-key" className="text-white">Chave de Ativação</Label>
                     <Input
                       id="signup-key"
                       type="text"
                       value={activationKey}
                       onChange={(e) => setActivationKey(e.target.value.toUpperCase())}
                       placeholder="CREATOR-MES-XXXX"
-                      className="bg-black/40 border-white/10 h-10 rounded-xl font-mono"
+                      className="bg-black/40 border-white/10 h-10 rounded-xl font-mono text-white placeholder:text-white/50"
                       required
                     />
                   </div>
